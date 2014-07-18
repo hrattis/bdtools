@@ -1,0 +1,178 @@
+#!/bin/bash
+
+# un poco de ayuda, deben existir un argumento, si no manda ayuda
+if [ $# -lt 1 ]
+then
+
+   echo "*** ERROR ***"
+   echo "uso: ${0##*/} identificador_del_proyecto"
+   echo "ejemplo: ./${0##*/} prominente"
+   exit
+
+fi
+
+# Parametros
+IPROYECT=$1 
+ID_YEAR=($(date | awk '{print $6}'))
+
+# Const
+DIRWP="/var/lamp/files/proyectos"
+URL=".dev.cba.brandigital.com"
+PLANTILLA="/root/script/plantilla"
+DPASS="/var/lamp/security"
+FPASS="passwd"
+DA2ASITE="/etc/apache2/sites-available-lamp"
+DA2ESITE="/etc/apache2/sites-enabled"
+
+
+#estructura
+DIRES[0]='Domains/site/public'
+DIRES[1]='Domains/previews'
+DIRES[2]='Domains/static'
+DIRES[3]='Domains/service/public'
+DIRES[4]='Files'
+DIRES[5]='Fuentes'
+
+#gen pass
+#PASS=($(/root/script/randy -sldL10))
+PASS=$2
+
+# print datos
+echo ""
+echo "Datos"
+echo "Identificador del proyecto : " $IPROYECT
+echo "Directorio del proyecto : "$DIRWP"/"$IPROYECT
+echo "Urls del proyecto:"
+echo "             "$IPROYECT$URL
+echo "             service."$IPROYECT$URL
+echo "             static."$IPROYECT$URL
+echo "             previews."$IPROYECT$URL
+echo "Htpass User: "$IPROYECT
+echo "Htpass Pass: "$PASS
+echo ""
+echo "Config HTTPS:"
+echo "ProxyPass /$IPROYECT$URL/ http://$IPROYECT$URL/"
+echo "ProxyPassReverse /$IPROYECT$URL/ http://$IPROYECT$URL/"
+echo ""
+	exit 0
+
+#crear directorios
+echo "creando estructura de directorio."
+
+for t in "${DIRES[@]}"
+do
+	mkdir -p  $DIRWP"/"$IPROYECT"/"$t
+	chown nobody.www-data $DIRWP"/"$IPROYECT"/"$t
+	chmod a=rx,g+s,u+w $DIRWP"/"$IPROYECT"/"$t
+done
+
+# carpeta IT
+
+DIRIT=$DIRWP"/"$IPROYECT"/_IT"
+
+mkdir -p $DIRIT
+chmod o=,g=,u=rxw $DIRIT
+
+#crear los archivos de configuración
+
+#si los archivos existen los borramos
+
+SEDPARAM1=" s|{url}|$IPROYECT$URL|g"
+SEDPARAM2=" s|{DR}|$DIRWP/$IPROYECT/Domains/site/public|g"
+SEDPARAM3=" s|{DP}|$DPASS/$IPROYECT/$FPASS|g"
+
+cat $PLANTILLA | sed -e "$SEDPARAM1" -e "$SEDPARAM2" -e "$SEDPARAM3" > $DIRIT"/"$IPROYECT
+
+SEDPARAM1=" s|{url}|service.$IPROYECT$URL|g"
+SEDPARAM2=" s|{DR}|$DIRWP/$IPROYECT/Domains/service/public|g"
+
+cat $PLANTILLA | sed -e "$SEDPARAM1" -e "$SEDPARAM2" -e "$SEDPARAM3" > $DIRIT"/"$IPROYECT".service"
+
+SEDPARAM1=" s|{url}|static.$IPROYECT$URL|g"
+SEDPARAM2=" s|{DR}|$DIRWP/$IPROYECT/Domains/static|g"
+
+cat $PLANTILLA | sed -e "$SEDPARAM1" -e "$SEDPARAM2" -e "$SEDPARAM3" > $DIRIT"/"$IPROYECT".static"
+
+SEDPARAM1=" s|{url}|previews.$IPROYECT$URL|g"
+SEDPARAM2=" s|{DR}|$DIRWP/$IPROYECT/Domains/previews|g"
+
+cat $PLANTILLA | sed -e "$SEDPARAM1" -e "$SEDPARAM2" -e "$SEDPARAM3" > $DIRIT"/"$IPROYECT".previews"
+
+SEDPARAM1=" s|{tex}|$IPROYECT|g"
+FD="$DIRWP/$IPROYECT/Domains/site/public/index.php"
+cp "/root/script/index.php" $FD
+cat $FD | sed -e "$SEDPARAM1"  > $FD
+
+SEDPARAM1=" s|{tex}|previews.$IPROYECT|g"
+FD="$DIRWP/$IPROYECT/Domains/previews/index.php"
+cp "/root/script/index.php" $FD
+cat $FD | sed -e "$SEDPARAM1"  > $FD
+
+SEDPARAM1=" s|{tex}|static.$IPROYECTL|g"
+FD="$DIRWP/$IPROYECT/Domains/static/index.php"
+cp "/root/script/index.php" $FD
+cat $FD | sed -e "$SEDPARAM1"  > $FD
+
+SEDPARAM1=" s|{tex}|service.$IPROYECT|g"
+FD="$DIRWP/$IPROYECT/Domains/service/public/index.php"
+cp "/root/script/index.php" $FD
+cat $FD | sed -e "$SEDPARAM1"  > $FD
+
+
+
+#copiar los archivos de configuración 
+
+cp $DIRIT"/$IPROYECT" $DA2ASITE"/"
+cp $DIRIT"/$IPROYECT.service" $DA2ASITE"/"
+cp $DIRIT"/$IPROYECT.static" $DA2ASITE"/"
+cp $DIRIT"/$IPROYECT.previews" $DA2ASITE"/"
+
+ln -s $DA2ASITE"/"$IPROYECT $DA2ESITE"/"$IPROYECT
+ln -s $DA2ASITE"/"$IPROYECT".service" $DA2ESITE"/"$IPROYECT".service"
+ln -s $DA2ASITE"/"$IPROYECT".static" $DA2ESITE"/"$IPROYECT".static"
+ln -s $DA2ASITE"/"$IPROYECT".previews" $DA2ESITE"/"$IPROYECT".previews"
+
+# htpasswd
+mkdir -p $DPASS/$IPROYECT
+if [ -f $DPASS/$IPROYECT/$FPASS ]
+then
+	rm $DPASS/$IPROYECT/$FPASS
+fi
+
+htpasswd -b -c $DPASS/$IPROYECT/$FPASS $IPROYECT $PASS 
+
+
+#reload apache
+	/etc/init.d/apache2 reload
+FT=$DIRIT"/fichaT.txt"
+#echo $FT
+echo "Ficha tecnica" > $FT
+echo "" >> $FT 
+echo ""  >> $FT 
+echo "Datos" >> $FT 
+echo "Identificador del proyecto : " $IPROYECT  >> $FT 
+echo "Directorio del proyecto : "$DIRWP"/"$IPROYECT  >> $FT 
+echo "Urls del proyecto:"  >> $FT 
+echo "             "$IPROYECT$URL  >> $FT 
+echo "             service."$IPROYECT$URL  >> $FT 
+echo "             static."$IPROYECT$URL  >> $FT 
+echo "             previews."$IPROYECT$URL  >> $FT 
+echo "Htpass User: "$IPROYECT  >> $FT 
+echo "Htpass Pass: "$PASS  >> $FT 
+echo "" >> $FT
+echo "Año: "$ID_YEAR >> $FT 
+echo ""  >> $FT 
+
+
+
+
+
+#printf "ver Ficha tecnica (y/n):"
+#read ENTRADA
+##ENTRADA="y"
+#if [ "$ENTRADA" = "y" ]
+#then
+#	cat $FT
+#fi
+
+

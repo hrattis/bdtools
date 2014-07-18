@@ -1,0 +1,33 @@
+sudo apt-get install libnss-ldap
+
+Para reconfigurar LDAP:
+
+sudo dpkg-reconfigure ldap-auth-config
+
+sudo /etc/init.d/nscd restart
+
+
+
+sudo auth-client-config -t nss -p lac_ldap
+
+sudo pam-auth-update
+
+
+Agregar en /etc/pam.d/common-session:
+
+session required pam_mkhomedir.so skel=/etc/skel/
+
+
+
+En /etc/pam.d/login agregar:
+
+auth sufficient pam_ldap.so 
+auth required pam_unix.so try_first_pass
+
+
+Asegurarse que los usuarios a autenticar sean posixAccount y Person
+
+
+Fuentes:
+
+http://devnotcorp.wordpress.com/2011/05/10/ldap-authentication-for-ubuntu-client/

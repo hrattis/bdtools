@@ -1,0 +1,45 @@
+/*
+* Brandigital 
+*
+* Ficha Tecnica Acción
+*
+*/
+
+# Nombre completo del proyecto 
+Nombre completo del proyecto: {project}
+# Identificador del proyecto
+[Identificador_proyecto] := {project}
+# Tipo De proyecto
+#
+[type_proyect] := LTP
+
+# Live : 
+#_________________________
+# Dominios Asociados
+#____________________
+[domain.ppl] := NA
+[domain.ppl] := NA
+[domain.sec] := NA
+
+#Urls:
+[live.root.redirect]:= NA (Indica a que url debe hacer redireccion la raiz del dominio)
+[live.www] := NA
+[live.www-temporal]:= {project}.live.ec2eu.brandigital.com
+[live.static] := NA
+[live.service] := NA
+[live.HTTPS] := https://apps-fb.ec2eu.brandigital.com/{project}.live.ec2eu.brandigital.com/
+
+#ftp
+[live.ftp_server] := ftp.live-01.ec2eu.brandigital.com
+User: {project}
+Pass: {pass}
+
+# Servidor de base de datos
+Server: mysql.live-01.ec2eu.brandigital.com
+BD: (Coordinar con Back)
+user: (Coordinar con Back)
+pass: (Coordinar con Back)
+
+
+# Formularios/Registro
+[live.mail_forms] := ses.brandigital.com

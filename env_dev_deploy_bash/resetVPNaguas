@@ -1,0 +1,12 @@
+#!/bin/bash
+
+VPN=$(ifconfig|grep tun0|wc -l)
+
+if (( $VPN  == "0" ))
+then 
+	echo "VPN desconectada"
+	vpnc-disconnect
+	vpnc /etc/vpnc/aacc.conf
+else
+	echo "VPN conectada"
+fi

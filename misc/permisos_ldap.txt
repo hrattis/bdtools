@@ -1,0 +1,22 @@
+Permisos - ACL en Slapd
+=======================
+
+Este server LDAP tiene la peculiaridad que tiene varias base de datos, como ser frontend y backend por ejemplo, y dependiendo que queremos restringir, por lo general se usa la base de datos de backend a la hora de aplicar reglas ACL. En nuestro caso, usaremos olcDatabase={1}hdb del cual podemos encontrar su correspondiente LDIF en /etc/ldap/slapd.d/cn\=config/
+
+Los permisos se aplican creando un archivo LDIF y añadiendolo a la base con el comando ldapmodify, teniendo mucho cuidado porque podemos pisar las reglas principales existentes y despues no tendremos visibilidad o acceso ni siquiera con el administrador. Se recomienda hacer un backup del correspondiente LDIF que tiene la base hacia la carpeta home por si tenemos que restaurar los permisos.
+
+
+Ejemplo de un archivo LDIF:
+
+dn: olcDatabase={1}hdb,cn=config
+replace: olcAccess
+olcAccess: to attrs=userPassword,shadowLastChange,campoCustom by self write by anonymous auth by dn="cn=admin,dc=example,dc=com" write by * none
+olcAccess: to dn.base="" by * read
+olcAccess: to * by self write by dn="cn=admin,dc=example,dc=com" write by * read
+
+En este ejemplo, la unica regla que es de nuestra incumbencia es la primera regla en la que restringimos la visibilidad de campoCustom editable para administrador y si mismo, anonimos no lo pueden acceder si no se autentican primero y para los otros usuarios, no tienen visibilidad. Las otras dos reglas son necesarias mantenerlas cuando hacemos replace, si no tendremos serios problemas de acceso.
+
+
+Ejemplo de comando ldapmodify para agregar el LDIF que creamos a la base:
+
+sudo ldapmodify -Q -Y EXTERNAL -H ldapi:/// -f <nombre archivo>.ldif

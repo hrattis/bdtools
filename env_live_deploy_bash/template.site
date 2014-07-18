@@ -1,0 +1,26 @@
+<VirtualHost *:80>
+        ServerName TEMPLATE.live.ec2eu.brandigital.com
+        ServerAdmin it@brandigital.com
+        DocumentRoot DR/Domains/site/public 
+        <Directory />
+                Options FollowSymLinks
+                AllowOverride None
+                Order deny,allow
+                Deny from all
+        </Directory>
+        <Directory DR/Domains/site/public> 
+                Options -Indexes FollowSymLinks MultiViews -Includes
+                AddHandler application/x-httpd-php .php
+                AllowOverride All
+                Order allow,deny
+                allow from all
+        </Directory>
+
+        ErrorLog /var/data/web2/sites/tray-eu/logs/apache2/TEMPLATE/error.log
+
+        # Possible values include: debug, info, notice, warn, error, crit,
+        # alert, emerg.
+        LogLevel warn
+
+        CustomLog /var/data/web2/sites/tray-eu/logs/apache2/TEMPLATE/access.log combined
+</VirtualHost>

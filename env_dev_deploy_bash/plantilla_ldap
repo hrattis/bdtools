@@ -1,0 +1,32 @@
+<VirtualHost 192.168.4.26:80>
+        ServerAdmin webmaster@localhost
+        ServerName {url}
+        DocumentRoot {DR}
+        <Directory {DR} >
+                Options -Indexes FollowSymLinks MultiViews
+                AllowOverride All
+                Order allow,deny
+                AddHandler application/x-httpd-php .php
+	        AuthName "Brandigital DEV"
+	        AuthType Basic
+	        AuthLDAPBindDN  "cn=seeker,ou=control,dc=seele,dc=brandigital"
+	        Include /etc/apache2/credentials
+	        AuthBasicProvider ldap
+	        AuthzLDAPAuthoritative off
+        	AuthLDAPUrl "ldap://selee.brandigital.com/dc=seele,dc=brandigital?uid?sub"
+	        Require ldap-attribute gidNumber=1200
+	        Require ldap-user {CLI}
+		Require valid-user
+	        Allow from 192.168 201.99.43.55 190.11.150.124
+                Satisfy Any
+        </Directory>
+
+        ErrorLog /var/log/apache2/devel/error_{proyecto}.log
+
+        # Possible values include: debug, info, notice, warn, error, crit,
+        # alert, emerg.
+        LogLevel warn
+
+        CustomLog /var/log/apache2/devel/access_{proyecto}.log combined
+        ServerSignature On
+</VirtualHost>

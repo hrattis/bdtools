@@ -1,0 +1,32 @@
+vim /tmp/borrame.conf
+(this is what goes in the file)
+
+include /etc/ldap/schema/core.schema
+include /etc/ldap/schema/cosine.schema
+include /etc/ldap/schema/nis.schema
+include /etc/ldap/schema/inetorgperson.schema
+include /etc/ldap/schema/brandigital.schema 
+
+mkdir /tmp/borrame.d
+
+slaptest -f /tmp/borrame.conf -F /tmp/borrame.d
+
+Edit the generated file
+vim /tmp/borrame.d/cn\=config/cn\=schema/cn\=\{4\}brandigital.ldif
+
+I changed the three head lines to this:
+dn: cn=brandigital,cn=schema,cn=config
+objectClass: olcSchemaConfig
+cn: brandigital
+
+Then I deleted these lines from the bottom of the file:
+structuralObjectClass:
+entryUUID:
+creatorsName:
+createTimestamp:
+entryCSN:
+modifiersName:
+modifyTimestamp:
+
+And at last I inserted the new schema to the ldap tree:
+ldapadd -Y EXTERNAL -H ldapi:/// -f /tmp/borrame.d/cn\=config/cn\=schema/cn\=\{4\}brandigital.ldif

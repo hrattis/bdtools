@@ -1,0 +1,390 @@
+#!/bin/bash
+##############################
+# randy: script para generar una contraseña aleatoria entre 1 y 30 caracteres.
+#               Longitud predeterminada 8 caracteres.
+#               Forma predeterminada alfanumérica minúsculas.
+#
+#
+#   Authors: quijote99 & wanako
+#   version: 1.4
+#   date: 09/04/2007
+#   encoding: UTF8
+#
+#
+# Modificado: sin caracteres ñ y ü (pedido de neri)
+#	jcuenca@brandigital.com
+#
+##############################
+####### VARIABLES ############
+
+NAME="${0##*/}"	# $(basename $0)
+MYNAME='randy'
+LMIN='1'	# length min
+LMAX='30'	# length max
+LDEF='8'	# length default
+NL='\n'	 # newline
+TB='\t'	 # tab
+aPass=()	# Array de passwords
+NPASS='1'	# Passwords generadas por defecto
+np='0'	 # variable auxiliar para la generación de varias claves
+SVER="$MYNAME versión 1.4 (09/04/2007)"
+AUTHOR='Escrito por Manuel Martín (quijote99) y Wanako (guanaco?)'
+##############################
+####### FUNCTIONS ############
+
+bd() {	# bold color
+    echo -en "\E[1m$*\E[0m"
+    return
+}
+
+tb() {	# tab tab
+    echo -en "$TB$TB"
+    return
+}
+
+nt() {	# newline tab
+    echo -en "$NL$TB"
+    return
+}
+
+bb() {	# bold color + background color
+    bd "\E[41m $* "	# 41 is red
+    return
+}
+
+helpy() {
+    local PAGER OPTS='-[adlu|A][frs] -[L args] [-i args] [-n args]'
+    local HELP="$MYNAME(1)$(tb)${TB}User Manual$(tb)$TB$MYNAME(1)
+    $NL$(bd NOMBRE)
+    $TB$MYNAME - script para generar una contraseña aleatoria.
+    $NL$(bd SINOPSIS)$(nt)$(bd $MYNAME) [$(bd $OPTS)]
+    $TB$(bd $MYNAME) [$(bd OPCIONES)] [$(bd ARGUMENTOS)]
+    $NL$(bd DESCRIPCION) 
+    ${TB}Pequeña utilidad para generar claves aleatorias basándose en el algorit-
+    ${TB}mo $(bd RANDOM) de Bash y en el dispositivo $(bd /dev/urandom).
+    $NL$(bd OPCIONES) 
+    ${TB}Este script utiliza la función $(bd getopts) de Bash y no admite opciones lar-
+    ${TB}gas de la forma $(bd --option) como lo haría $(bd getopt), sin embargo algunas opcio
+    ${TB}nes largas son predefinidas para emular este comportamiento y sólo son a
+    ${TB}plicables como primer argumento pasado al script.
+    ${TB}Si no se indicasen opciones la forma predeterminada de la clave es alfa-
+    ${TB}numérica con letras minúsculas y una longitud de ocho caracteres.
+    $(nt)$(bd CORTAS)
+    $(nt)$(bd -a) (accents) acentos
+    $(tb)Genera la clave usando como patrón vocales acentuadas.
+    $(nt)$(bd -d) (digits) dígitos
+    $(tb)Genera la clave usando como patrón dígitos enteros positivos.
+    $(nt)$(bd -f) (force) forzar
+    $(tb)No solicita confirmación para generar la clave usando un patrón
+    $(tb)ingresado por el usuario, útil sólo en combinación con $(bd -m) (ver
+    $(tb)más abajo).
+    $(nt)$(bd -l) (lows) bajos?
+    $(tb)Genera la clave usando como patrón letras minúsculas del alfabe-
+    $(tb)to inglés incluidas las letras ñ y ü.
+    $(nt)$(bd -i \'args\') (include) caracteres
+    $(tb)ARGS es el patrón de caracteres que formará parte de la clave
+    $(tb)junto con otras opciones si existiesen, si no es alfanumérico se
+    $(tb)solicitará confirmación, debe ser entrecomillado para evitar la
+    $(tb)expansión de la shell y no contener espacios.
+    $(tb)Utilice esta opción con precaución, la combinación de caracteres
+    $(tb)que la shell interprete o expanda pueden dar resultados inespera
+    $(tb)dos e incluso provocar la pérdida de datos, de todas formas si
+    $(tb)el intérprete es Bash no debería ocurrir.
+    $(nt)$(bd -r) (repeat) repetir
+    $(tb)Genera la clave sin repetir caracteres del patrón, la longitud
+    $(tb)de la clave es la longitud del patrón si no se utiliza la opción
+    $(tb)$(bd -L) (ver más abajo) y si no supera el máximo permitido de 30.
+    $(nt)$(bd -s) (silent) silencio
+    $(tb)Imprime en pantalla sólo la clave generada y sin usar resalto de
+    $(tb)color, útil para redirigir o concatenar la salida hacia un fiche
+    $(tb)ro o hacia la entrada de otra aplicación.
+    $(nt)$(bd -u) (uppers) altos?
+    $(tb)Genera la clave usando como patrón letras mayúsculas del alfabe-
+    $(tb)to inglés incluidas las letras Ñ y Ü.
+    $(nt)$(bd -A) (All) todo
+    $(tb)Implica las opciones $(bd -adlu) (ver más arriba).
+    $(nt)$(bd -L args) (Length) Longitud
+    $(tb)ARGS es un dígito entero positivo que indica la longitud de la
+    $(tb)clave y debe ser mayor igual a 1 o menor igual a 30.
+    $(nt)$(bd -n arg) (n repeats) n contraseñas
+    $(tb)Genera \"n\" claves listadas en una columna. Las claves pueden
+    $(tb)aparecer repetidas
+    $(nt)$(bd LARGAS)
+    $(nt)$(bd --author) (autor)
+    $(tb)Imprime el autor y finaliza.
+    $(nt)$(bd --help) (ayuda)
+    $(tb)Imprime esta ayuda y finaliza.
+    $(nt)$(bd --version) (versión)
+    $(tb)Imprime la versión y finaliza.
+    $NL$(bd EJEMPLOS)
+    ${TB}Los ejemplos siguientes son equivalentes:
+    $(tb)$MYNAME$(tb)${TB}(predeterminado)
+    $(tb)$MYNAME -ldL8$(tb)(similar)
+    $(tb)$MYNAME -l -d -L8$(tb)(similar)
+    $(tb)$MYNAME -l -d -L '8'${TB}(similar)
+    $(nt)Los ejemplos siguientes generan una clave con caracteres ingresados por
+    ${TB}el usuario:
+    $(tb)$MYNAME -d -i '#'$(tb)(pregunta para utilizar '#')
+    $(tb)$MYNAME -df -i'#'$(tb)(no pregunta para utilizar '#')
+    $NL$(bd AUTOR)
+    $TB$AUTHOR
+    $NL$(bd BUGS)
+    ${TB}Comunicar bichos a <museo@esdebian.org> :)
+    $NL$MYNAME(1)$(tb)$SVER$(tb)$TB$MYNAME(1)"
+    if PAGER="$(which less)" ; then
+PAGER+=' -R'
+( echo -e "$HELP" | $PAGER )	# ( subshell )
+elif PAGER="$(which more)" ; then
+    PAGER+=' -f'
+    ( echo -e "$HELP" | $PAGER )
+else echo -e "$HELP"	# auch, no pager
+    fi
+    exit 0
+}
+
+escape() {
+    echo -n "${*//\\/\\\\}"	# \ -> \\
+    return
+}
+
+error() {
+    echo -e "$MYNAME: $*$NL$MYNAME: --help para recibir ayuda." > /dev/stderr
+    exit 1
+}
+
+warn() {
+    echo "$MYNAME: $*" > /dev/stderr
+    return
+}
+
+isdigit() {
+    if [[ "$@" =~ '[^[:digit:]]' ]] ; then
+return 1
+else return 0
+    fi
+}
+
+separate() {
+    local CHARS=''	 # default IFS=space for read then
+    while read -rsn 1 ; do	# the space deposited by the user
+        CHARS+="$REPLY "	# discarded, more safety?
+    done <<< "$@"	# here string structure
+    echo "$CHARS"
+    return
+}
+
+digits() {
+    local DIGITS=()
+    DIGITS=( {0..9} )
+    echo "${DIGITS[*]}"	# echo entire array - string
+    return
+}
+
+lowers() {
+    local LOWERS=()
+    LOWERS=( {a..z} )
+    echo "${LOWERS[*]}"
+    return
+}
+
+uppers() {
+    local UPPERS=()
+    UPPERS=( {A..Z} )
+    echo "${UPPERS[*]}"
+    return
+}
+
+accents() {
+    local ACCENTS=()
+    ACCENTS=(  )
+    echo "${ACCENTS[*]}"
+    return
+}
+
+default() {
+    local DEFAULT=()
+    DEFAULT=( $(digits) $(lowers) )
+    echo "${DEFAULT[*]}"
+    return
+}
+
+chkoptions() {
+    OPTIND=1	# to be sure that index is initialized to 1 each time
+    local OPT OPTIONS FORCE	# it is called to getopts
+    while getopts ":aAdflL:i:rsun:" OPT ; do
+case "$OPT" in
+        a|A|d|f|l|L|i|r|s|u|n )
+if [[ "$OPTIONS" =~ ".*$OPT.*" ]] ; then
+    error "se espera sólo una ocurrencia de $(bd -$OPT)"
+fi
+OPTIONS+="$OPT" # OPTIONS="$OPTIONS$OPT"
+case "$OPT" in
+    a|d|l|u )
+if [[ "$OPTIONS" =~ 'A' ]] ; then
+    error "la opción $(bd -A) implica $(bd -adlu)"
+fi
+    ;;
+    A ) if [[ "$OPTIONS" =~ '(a|d|l|u)' ]] ; then
+                        error "la opción $(bd -A) implica $(bd -adlu)"
+        fi
+    ;;
+esac
+    ;;
+        * ) if [[ "$OPT" == ':' ]] ; then
+                error "se espera un argumento para $(bd -$OPTARG)"
+    else error "opción desconocida $(bd -$(escape $OPTARG))"
+        fi
+    ;;
+esac
+    done
+    if [[ "$OPTIND" -le "${#@}" ]] ; then
+error "error de sintáxis $(bd $(escape ${@:$OPTIND:1}))"
+    fi
+    OPTIND=1	# to be sure again
+    while getopts ":aAdflL:i:rsun:" OPT ; do
+if [[ "$OPT" == 'L' ]] ; then
+    if ( ! isdigit "$OPTARG" ) ; then
+error "argumento no válido -L $(bd $(escape $OPTARG))"
+elif [[ "$OPTARG" -lt "$LMIN" || "$OPTARG" -gt "$LMAX" ]] ; then
+error "longitud fuera de rango $(bd $OPTARG)"
+    fi
+fi
+
+if [[ "$OPT" == 'n' ]] ; then
+if ( ! isdigit "$OPTARG" ) ; then
+error "argumento no válido -n $(bd $(escape $OPTARG))"
+    fi
+fi
+
+    done
+    OPTIND=1	# to be sure again II
+    while getopts ":aAdflL:i:rsun:" OPT ; do
+case "$OPT" in
+    f ) FORCE=true ;;
+    L ) LUSER="$OPTARG" ;;	# global
+    r ) REPEAT=true ;;	 # global
+    s ) SILENT=true ;;	 # global
+n ) NPASS="$OPTARG";;	# global
+esac
+
+    done
+    OPTIND=1	# to be sure again III
+    while getopts ":aAdflL:i:rsun:" OPT ; do
+if [[ "$OPT" == 'i' ]] ; then
+    PUSER="${OPTARG//[[:space:]]/}"	# global
+    if [[ ! "$FORCE" ]] ; then
+if [[ "$OPTARG" =~ '([^[:alnum:]])' ]] ; then
+    OPTARG="${PUSER//[[:alnum:]]/}"
+    echo -n "$MYNAME: utilizar $(bd $(escape $OPTARG)) ? [s/n]"
+    read -sn 1
+    if [[ "$REPLY" =~ '(s|S)' ]] ; then
+echo -e "$NL\E[A\E[M\E[A" # newline-up-clearline-up
+else
+echo -e "$NL\E[A\E[M\E[A"
+echo "$MYNAME: cancelado..."
+exit 0
+    fi
+fi
+    fi
+fi
+    done
+    return
+}
+
+genpattern() {
+    OPTIND=1	# to be sure again IV
+    local OPT PATTERN=()
+    while getopts ":aAdflL:i:rsu" OPT ; do
+case "$OPT" in
+    a ) PATTERN+=( $(accents) ) ;;
+    A ) PATTERN=( $(default) $(uppers) $(accents) ) ;;
+    d ) PATTERN+=( $(digits) ) ;;
+    l ) PATTERN+=( $(lowers) ) ;;
+    i ) PATTERN+=( $(separate $PUSER) ) ;;
+    u ) PATTERN+=( $(uppers) ) ;;
+esac
+    done
+    if [[ ! "${PATTERN[0]}" ]] ; then
+PATTERN=( $(default) )
+    fi
+    echo "${PATTERN[*]}"
+    return
+}
+
+##############################
+####### MAIN #################
+
+set -f	# no globbing
+
+if [[ "$NAME" != "$MYNAME" ]] ; then	# my name is randy :)
+    echo -e "$NAME ?${NL}Mi nombre es $(bd randy) !"
+    exit 1
+fi
+
+if [[ ! "$1" ]] ; then
+    LENGTH="$LDEF"
+    PATTERN=( $(default) )
+    elif [[ "$1" == '--help' ]] ; then
+helpy
+    elif [[ "$1" == '--version' ]] ; then
+echo "$SVER"
+exit 0
+    elif [[ "$1" == '--author' ]] ; then
+echo "$AUTHOR"
+exit 0
+    elif [[ "$1" != '^[[.-.]][[:alpha:]]' ]] ; then
+chkoptions "$@"
+PATTERN=( $(genpattern $@) )
+LENGTH="${LUSER:-$LDEF}"	# LENGTH=($LUSER || $LDEF)
+    else error "error de sintáxis $(bd $(escape $1))"
+fi
+
+LPTN="${#PATTERN[@]}"
+
+if [ "$LPTN" -eq '1' -a "$LENGTH" -eq '1' ] ; then
+    warn "nada que hacer con $(bd $(escape ${PATTERN[*]}))"
+fi
+
+if [[ "$REPEAT" ]] ; then
+    if [[ "$LUSER" ]] ; then
+if [[ "$LUSER" -gt "$LPTN" ]] ; then
+    error "longitud de clave $(bd $LUSER) longitud de patrón $(bd $LPTN)"
+fi
+else
+LENGTH="$LPTN"
+if [[ "$LENGTH" -gt "$LMAX" ]] ; then
+    warn "longitud de clave $(bd $LENGTH) se trunca a $(bd $LMAX)"
+    LENGTH="$LMAX"
+    elif [[ "$LPTN" -eq '1' ]] ; then
+    warn "nada que hacer con $(bd $(escape ${PATTERN[*]}))"
+fi
+    fi
+fi
+
+while [[ "$np" -lt "$NPASS" ]]; do
+(( BYTES = LENGTH * 2 ))
+SEEDS=( $(od -A n -d -N $BYTES < /dev/urandom) )
+PASSWORD=''
+for (( i=0 ; i < LENGTH ; i++ )) ; do
+    RANDOM="${SEEDS[$i]}"
+   PTNIND="$(($RANDOM%$LPTN))"
+    if [[ "$REPEAT" ]] ; then
+PASSWORD+="${PATTERN[$PTNIND]}"
+unset PATTERN[PTNIND]
+PATTERN=( ${PATTERN[@]} )
+LPTN="${#PATTERN[@]}"
+else PASSWORD+="${PATTERN[$PTNIND]}"
+    fi
+done
+aPass[np]="${PASSWORD}"
+let np++
+done
+
+for (( i=0 ; i < np ; i++ )); do
+if [[ "$SILENT" ]] ; then
+echo "${aPass[$i]}"
+    else echo "Contraseña: $(bb $(escape "${aPass[$i]}"))"
+fi
+done
+
+exit 0

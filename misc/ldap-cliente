@@ -1,0 +1,61 @@
+Lo primero que hacemos luego de instalar y actualizar el sistema es configurar el cliente de conexión al Servicio de Directorio via LDAP.
+Para ello en debemos instalar los siguientes paquete usando éste comando:
+
+	apt-get install ldap-auth-client nscd libpam-cracklib
+
+El proceso de instalación ira haciendo preguntas de configuración, las mismas deben responderse en el siguiente orden:
+
+1.	ldap://seele.brandigital.com/
+2.	dc=seele,dc=brandigital
+3.	3
+4.	yes
+5.	no
+6.	cn=seeker,ou=control,dc=seele,dc=brandigital
+7.	ZVgkE5tWTm#9
+
+Una vez terminado, en linea de comando ejecutamos:
+	dpkg-reconfigure ldap-auth-config
+En esta ocación debemos configura el método de cifrado para usar "CRYPT".
+
+Desde  consola ejecutamos para setear el perfil de PAM:
+	auth-client-config -t nss -p lac_ldap
+
+Editamos el archivo /usr/share/pam-configs/my_mkhomedir y agregamos:
+
+Name: activate mkhomedir
+Default: yes
+Priority: 900
+Session-Type: Additional
+Session:
+        required                        pam_mkhomedir.so umask=0022 skel=/etc/skel
+
+Tambien editamos /etc/security/group.conf añadiendo al final del mismo:
+
+*;*;*;Al0000-2400;audio,cdrom,plugdev,lpadmin,sambashare,pulse
+
+Por ultimo editamos /usr/share/pam-configs/bd_groups con:
+
+Name: activate /etc/security/group.conf
+
+Default: yes
+Priority: 900
+Auth-Type: Primary
+Auth:
+        required                        pam_group.so use_first_pass
+
+Ejecutamos desde linea de comandos:
+	pam-auth-update
+
+Se copia el archivo seele_gnutls_ca.crt a la carpeta /usr/share/ca-certificates/
+
+Se ejecuta el comando de consola "dpkg-reconfigure ca-certificates", se elige la opción "si" y de la lista se desplaza hacia abajo y se busca el casillero vacio que diga "seele_gnutls_ca.crt", se lo selecciona (tiene que quedar con un asterisco como los otros) y se selecciona "Actualiza" y despues un enter.
+
+Habilitar el soporte TLS en necesario editar el archivo /etc/ldap.conf descomentamos la linea:
+	ssl start_tls
+
+Para configura los accesos vía ventana de login, en lightdm debemos agregar en /etc/ligthdm/ligthdm.conf las lineas:
+
+greeter-show-manual-login=true
+greeter-hide-users=true
+allow-guest=false
+	

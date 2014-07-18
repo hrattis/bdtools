@@ -1,0 +1,30 @@
+
+<VirtualHost *:80>
+	ServerAdmin webmaster@localhost
+	ServerName URL
+	DocumentRoot "DR"
+
+        <Directory .hg/>
+                Options -FollowSymLinks
+                AllowOverride None
+		Order deny,allow
+		Deny from All
+        </Directory>
+	
+	<Directory DR >
+                Options -Indexes FollowSymLinks MultiViews
+                AllowOverride All
+           	Order allow,deny
+		Allow from IP
+		Satisfy Any
+        </Directory>
+
+        ErrorLog "c:/wamp/logs/error-LOG.log"
+
+        # Possible values include: debug, info, notice, warn, error, crit,
+        # alert, emerg.
+        LogLevel warn
+
+        CustomLog "c:/wamp/logs/access-LOG.log" combined
+        ServerSignature On
+</VirtualHost>

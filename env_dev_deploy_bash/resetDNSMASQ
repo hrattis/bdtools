@@ -1,0 +1,11 @@
+#!/bin/bash
+
+VPN=$(dig mysql-01.cba.brandigital.com. | grep 192.168.4.63 | wc -l)
+
+if (( $VPN  == "0" ))
+then 
+	echo "DNS Down"
+	/etc/init.d/dnsmasq restart
+else
+	echo "DNS OK"
+fi

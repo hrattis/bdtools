@@ -1,0 +1,37 @@
+/*
+* Brandigital 
+*
+* Ficha Tecnica Acción
+*
+*/
+
+# Nombre completo del proyecto 
+Nombre completo del proyecto: {project}
+# Identificador del proyecto
+[Identificador_proyecto] := {project}
+# Tipo De proyecto
+#
+[type_proyect] := LTP
+# Workspace (Desarrollo)
+#_________________________
+
+#Urls:
+[dev.www] := http://{project}.dev.cba.brandigital.com/
+[dev.static] := 
+[dev.service] := 
+[dev.previews] := http://previews.{project}.dev.cba.brandigital.com/
+#Acceso externo: 
+Htpass User: {cliente}
+Htpass Pass: {pass}
+
+# File Server:
+[dev.file_server] := U:\projects\{year}\{project}\
+
+# Servidor de base de datos
+Server: mysql-02.cba.brandigital.com
+BD: (Coordinar con Back)
+user: (Coordinar con Back)
+pass: (Coordinar con Back)
+
+#SMTP
+[dev.smtp] := ses.brandigital.com

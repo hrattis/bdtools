@@ -1,0 +1,47 @@
+Configurar SSL Cert Mikrotik
+
+Tomando Mazinger como hostname del router:
+
+1 - Generar request dentro de Mikrotik
+  
+	/certificate create-certificate-request
+
+  Usar datos:
+	filename key : mazinger-key.pem
+	filename request : mazinger-request.pem
+  Datos SSL
+	CN: mazinger.cba.brandigital.com
+	CO: AR
+	LO: Cordoba
+	CI: Cordoba
+	OR: BRANDIGITAL S.A.
+	OU:
+	EM: it+mazinger@brandigital.com
+
+2 - Descargarse los files de request y de key
+
+3 - Firmar el request con una CA, por ejemplo con cacert.org, guardar el archivo con el nombre mazinger-certificate.pem
+
+4 - Re-formatear la llave a texto haciendo:
+    
+	openssl rsa -in mazinger-key.pem -text > mazinger-key2.pem
+
+5 - Subir la llave re-formateada y el certificado hacia el router
+
+6 - Importar el certificado haciendo:
+
+	import file-name=mazinger-certificate.pem
+
+7 - Importar la llave re-formateada haciendo:
+
+    	import file-name=mazinger-key2.pem
+
+8 - Verificamos el nombre del certificado importado haciendo:
+ 
+	print value-list
+
+    En este caso el nombre del certificado importado es cert1
+	
+8 - Configurar el servicio de www-ssl haciendo
+  
+	ip service www-ssl disable=no certificate=cert1
